@@ -146,7 +146,11 @@ private struct RateLimitsResponse: Decodable {
                 ))
             }
         }
-        if let credits = main.credits {
+        if let limit = main.individualLimit, let used = Double(limit.used), let cap = Double(limit.limit) {
+            snapshot.extraUsageTitle = "Monthly credit limit"
+            snapshot.extraUsage = "\(used.formatted(.number.precision(.fractionLength(0)))) of \(cap.formatted(.number.precision(.fractionLength(0)))) credits"
+            snapshot.extraUsagePercent = Double(100 - limit.remainingPercent)
+        } else if let credits = main.credits {
             snapshot.extraUsageTitle = "Credits remaining"
             snapshot.extraUsage = credits.unlimited ? "Unlimited" : credits.balance
         }
@@ -161,6 +165,7 @@ private struct RateLimitBucket: Decodable {
     let primary: Window?
     let secondary: Window?
     let credits: Credits?
+    let individualLimit: SpendLimit?
 
     struct Window: Decodable {
         let usedPercent: Double
@@ -179,5 +184,11 @@ private struct RateLimitBucket: Decodable {
     struct Credits: Decodable {
         let unlimited: Bool
         let balance: String?
+    }
+
+    struct SpendLimit: Decodable {
+        let limit: String
+        let used: String
+        let remainingPercent: Int
     }
 }
